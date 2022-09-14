@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.CharsetUtil;
@@ -28,23 +29,32 @@ public class CustomHandler extends SimpleChannelInboundHandler<HttpObject>{
 		//获取channel
 		Channel channel = ctx.channel();
 		
-		//显示客户端的远程地址
-		System.out.println(channel.remoteAddress());
-		
-		//通过缓冲区来发送消息 //unpooled是用来深拷贝buffer的 (我们在这边定义了要发送的消息）
-		ByteBuf content = Unpooled.copiedBuffer("Hello Netty", CharsetUtil.UTF_8); //这个时候数据在content buff里了
+		//针对httprequest来做一个判断
+		/* /[0:0:0:0:0:0:0:1]:58555
+		 * /[0:0:0:0:0:0:0:1]:58555
+		 * 会有两次请求，从chrome的dev > network里可以看到
+		 * 第一次是对localhost的请求，然后有一个favicon的请求
+		 */
+		if(msg instanceof HttpRequest) {
+			//显示客户端的远程地址
+			System.out.println(channel.remoteAddress());
 			
-		//构建一个http response
-		FullHttpResponse response =
-				new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-						HttpResponseStatus.OK,
-						content); //content就是response的内容
-		//为响应http response增加数据类型和长度
-		response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
-		response.headers().set(HttpHeaderNames.CONTENT_LENGTH,content.readableBytes());
+			//通过缓冲区来发送消息 //unpooled是用来深拷贝buffer的 (我们在这边定义了要发送的消息）
+			ByteBuf content = Unpooled.copiedBuffer("Hello Netty", CharsetUtil.UTF_8); //这个时候数据在content buff里了
+				
+			//构建一个http response
+			FullHttpResponse response =
+					new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+							HttpResponseStatus.OK,
+							content); //content就是response的内容
+			//为响应http response增加数据类型和长度
+			response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+			response.headers().set(HttpHeaderNames.CONTENT_LENGTH,content.readableBytes());
+			
+			//把response写了然后刷 (writeAndFlush)到客户端client 
+			ctx.writeAndFlush(response);
+		}
 		
-		//把response写了然后刷 (writeAndFlush)到客户端client 
-		ctx.writeAndFlush(response);
 	}	
 		
 }
