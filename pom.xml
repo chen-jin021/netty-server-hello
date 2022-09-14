@@ -3,7 +3,7 @@
   <groupId>com.imooc</groupId>
   <artifactId>imooc-netty-hello</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  
+
   <dependencies>
   <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
 	<dependency>

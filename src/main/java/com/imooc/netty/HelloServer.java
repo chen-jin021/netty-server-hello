@@ -1,5 +1,7 @@
 package com.imooc.netty;
 
+import java.io.Console;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
@@ -31,16 +33,15 @@ public class HelloServer {
 			ServerBootstrap serverBootstrap = new ServerBootstrap();
 			serverBootstrap.group(bossGroup, workerGroup) //对于我们server端的启动，我们把定义好的主从线程组绑定一下
 				.channel(NioServerSocketChannel.class) //当我们客户端和server建立连接之后，我们会有相应通道的产生
-				
-				/* 把channel理解为目的地，你要向目的地发送消息的话，
-				 * 会经过管道pipeline. 这个管道上有重重阻碍，就是handler <- 助手类*/
 				.childHandler(new HelloServerInitializer()); //从线程组里需要的助手类 <- 子处理器
+			/* 把channel理解为目的地，你要向目的地发送消息的话，
+			 * 会经过管道pipeline. 这个管道上有重重阻碍，就是handler <- 助手类*/
 			
 			//启动server //同步的使用方式，netty会等待8088接口初始化完成
 			ChannelFuture channelFuture = serverBootstrap.bind(8088).sync();
 			
 			//关闭监听channel 设置为同步
-			channelFuture.channel().close().sync();
+			channelFuture.channel().closeFuture().sync();
 		} finally{
 			bossGroup.shutdownGracefully(); //优雅关闭
 			workerGroup.shutdownGracefully();
